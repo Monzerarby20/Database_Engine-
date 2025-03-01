@@ -1,10 +1,10 @@
 #!/bin/bash
 
-PS3="Type your Table number to update: "
+PS3="Type your Table number to insert into: "
 
 echo "-------Select your table number from the menu---------"
 
-array=($(ls ))  # Ensuring only table files are listed
+array=($(ls ))  
 echo "${array[@]}"
 
 select choice in "${array[@]}"
@@ -14,40 +14,42 @@ do
         continue
     else
         echo "You have selected $choice"
-        
+
         while true; do
-            # Ask for the ID to update
-            echo "Enter the ID of the record you want to update:"
-            read id
+            
+            last_id=$(awk -F'|' 'NR>1 {print $1}' "$choice" | sort -n | tail -1)
+            new_id=$((last_id + 1))
 
-            # Check if the ID exists in the table
-            if ! grep -q "^$id|" "$choice"; then
-                echo "Error: ID not found in the table."
-                continue
+            
+            if [ -z "$last_id" ]; then
+                new_id=1
             fi
 
-            # Extract old values
-            old_record=$(grep "^$id|" "$choice")
-            IFS='|' read -r old_id old_name old_age <<< "$old_record"
+            
+            while true; do
+                echo "Enter Name:"
+                read name
+                if [[ -z "$name" ]]; then
+                    echo "Error: Name cannot be empty!"
+                else
+                    break
+                fi
+            done
 
-            # Ask for new values (leave empty to keep current values)
-            echo "Enter new Name (leave empty to keep '$old_name'):"
-            read name
-            new_name=${name:-$old_name}
+            
+            while true; do
+                echo "Enter Age:"
+                read age
+                if ! [[ "$age" =~ ^[0-9]+$ ]]; then
+                    echo "Error: Age must be an integer!"
+                else
+                    break
+                fi
+            done
 
-            echo "Enter new Age (leave empty to keep '$old_age'):"
-            read age
-            new_age=${age:-$old_age}
-
-            # Ensure Age is an integer if changed
-            if [[ -n "$age" && ! "$age" =~ ^[0-9]+$ ]]; then
-                echo "Error: Age must be an integer."
-                continue
-            fi
-
-            # Replace the old record with the updated one
-            sed -i "/^$id|/c\\$id|$new_name|$new_age" "$choice"
-            echo "Record updated successfully!"
+           
+            echo "$new_id|$name|$age" >> "$choice"
+            echo "Record inserted successfully! (ID: $new_id)"
             break
         done
     fi
