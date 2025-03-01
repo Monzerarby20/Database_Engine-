@@ -1,0 +1,1 @@
+id:(INEGER)(PRIMARY KEY)name:(VARCHAR)age:(INTEGER)
